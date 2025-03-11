@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flipbook PDF Bisnis 2025</title>
+    <link rel="stylesheet" href="style/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/turn.js/4.1.1/turn.min.css">
+</head>
+<body>
+    <!-- Tombol Navigasi -->
+    <div class="nav-button left" onclick="flipPrev()">&#10094;</div>
+    <div class="nav-button right" onclick="flipNext()">&#10095;</div>
+
+    <!-- Flipbook -->
+    <div id="flipbook"></div>
+
+    <!-- Load jQuery dari CDN -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Load Turn.js dari folder javascript -->
+    <script src="javascript/turn.min.js"></script>
+    <!-- Load PDF.js dari folder javascript -->
+    <script src="javascript/pdf.min.js"></script>
+    <!-- Efek Suara -->
+    <audio id="pageSound" src="sounds/page-flip.mp3"></audio>
+    <!-- Script Flipbook -->
+    <script>
+        $(document).ready(function() {
+            const flipbook = $('#flipbook');
+            const pdfPath = 'pdf/bisnis-2025.pdf';
+
+            // Inisialisasi PDF.js
+            pdfjsLib.getDocument(pdfPath).promise.then(pdf => {
+                const totalPages = pdf.numPages;
+
+                // Render setiap halaman PDF ke dalam flipbook
+                for (let i = 1; i <= totalPages; i++) {
+                    pdf.getPage(i).then(page => {
+                        const scale = 1.5;
+                        const viewport = page.getViewport({ scale });
+                        const canvas = document.createElement('canvas');
+                        const context = canvas.getContext('2d');
+                        canvas.height = viewport.height;
+                        canvas.width = viewport.width;
+
+                        // Render halaman PDF ke canvas
+                        page.render({
+                            canvasContext: context,
+                            viewport: viewport
+                        }).promise.then(() => {
+                            // Tambahkan canvas ke flipbook
+                            flipbook.append(`<div class="page"><canvas></canvas></div>`);
+                            flipbook.find('.page').last().find('canvas').replaceWith(canvas);
+                        });
+                    });
+                }
+
+                // Inisialisasi Turn.js setelah semua halaman selesai di-render
+                setTimeout(() => {
+                    flipbook.turn({
+                        width: 800,
+                        height: 600,
+                        autoCenter: true,
+                        duration: 1000, // Durasi animasi flip
+                        acceleration: true, // Aktifkan percepatan animasi
+                        gradients: true, // Efek gradien saat flip
+                        display: 'double', // Tampilkan dua halaman sekaligus (seperti buku)
+                        when: {
+                            turning: function(e, page, view) {
+                                playSound(); // Memutar suara saat halaman dibalik
+                            }
+                        }
+                    });
+                }, 1000); // Tunggu 1 detik untuk memastikan semua halaman selesai di-render
+            });
+
+            // Fungsi untuk memutar suara
+            function playSound() {
+                const sound = document.getElementById('pageSound');
+                sound.currentTime = 0; // Reset suara ke awal
+                sound.play();
+            }
+
+            // Fungsi untuk membalik ke halaman sebelumnya
+            function flipPrev() {
+                $('#flipbook').turn('previous');
+            }
+
+            // Fungsi untuk membalik ke halaman berikutnya
+            function flipNext() {
+                $('#flipbook').turn('next');
+            }
+        });
+    </script>
+</body>
+</html>
